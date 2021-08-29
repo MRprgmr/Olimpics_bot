@@ -18,6 +18,6 @@ from django.urls import path
 from handlers.updater import UpdateBot
 
 urlpatterns = [
-    path('', admin.site.urls),
+    path('admin/', admin.site.urls),
     path('bot', UpdateBot.as_view()),
 ]
