@@ -4,8 +4,8 @@ from aiogram.bot.api import TelegramAPIServer
 
 from data import config
 
-local_server = TelegramAPIServer.from_base('http://localhost:8081')
-# local_server = TelegramAPIServer.from_base('https://api.telegram.org')
+# local_server = TelegramAPIServer.from_base('http://localhost:8081')
+local_server = TelegramAPIServer.from_base('https://api.telegram.org')
 
 bot = Bot(token=config.BOT_TOKEN, parse_mode=types.ParseMode.HTML, server=local_server)
 storage = MemoryStorage()
