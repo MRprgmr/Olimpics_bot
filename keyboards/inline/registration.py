@@ -28,17 +28,17 @@ def grades_markup():
 
 
 confirmation_buttons = InlineKeyboardMarkup(row_width=2,
-                                           inline_keyboard=[
-                                               [
-                                                   InlineKeyboardButton(
-                                                       text="✅ Tasdiqlash",
-                                                       callback_data="confirm",
-                                                   )
-                                               ],
-                                               [
-                                                   InlineKeyboardButton(
-                                                       text="🔄 Qayta to'ldirish",
-                                                       callback_data="register_me",
-                                                   )
-                                               ]
-                                           ])
+                                            inline_keyboard=[
+                                                [
+                                                    InlineKeyboardButton(
+                                                        text="✅ Tasdiqlash",
+                                                        callback_data="confirm",
+                                                    )
+                                                ],
+                                                [
+                                                    InlineKeyboardButton(
+                                                        text="🔄 Qayta to'ldirish",
+                                                        callback_data="register_me",
+                                                    )
+                                                ]
+                                            ])

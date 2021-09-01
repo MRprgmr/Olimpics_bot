@@ -14,7 +14,7 @@ class User(models.Model):
     username = models.CharField(max_length=20, blank=True, null=True)
     full_name = models.CharField(max_length=40, blank=True, null=True)
     grade = models.ForeignKey(Class, on_delete=models.PROTECT, null=True)
-    phone_number = models.CharField(max_length=11, blank=True, null=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
     is_registered = models.BooleanField(default=False)
 
     def __str__(self):

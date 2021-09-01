@@ -9,16 +9,33 @@ from Bot.models import User, Class
 from keyboards.default.main_menu import main_menu_user
 from keyboards.default.registration import cancel_registration, send_number
 from keyboards.inline.callback_datas import grade_callback
+from keyboards.inline.profile import edit_profile
 from keyboards.inline.registration import profile_buttons, grades_markup, confirmation_buttons
 from loader import dp
 from states.register_states import Registration
 
 
+def make_profile_text(user):
+    user: User
+    fn = user.full_name.split()
+    answer = "\n".join([
+        f"<b>Familiya:</b>   {fn[0]}",
+        f"<b>Ism:</b>   {fn[1]}",
+        f"<b>Sinfi:</b>   {user.grade.name}",
+        f"<b>Telefon:</b>   {user.phone_number}\n",
+    ])
+    return answer
+
+
 @dp.message_handler(Text(equals=['👤 Profil']), state='*')
-async def profile(message: Message):
+async def profile(message: Message, state: FSMContext):
+    await state.finish()
     user = await sync_to_async(User.objects.get)(telegram_id=message.from_user.id)
     if not user.is_registered:
         await message.answer("⚠️ Sizda hali ma'lumotlar to'ldirilmagan", reply_markup=profile_buttons)
+    else:
+        answer_text = await sync_to_async(make_profile_text)(user)
+        await message.answer(text=answer_text, reply_markup=edit_profile)
 
 
 @dp.callback_query_handler(text="register_me")
@@ -37,7 +54,8 @@ async def cancel(message: Message, state: FSMContext):
 
 @dp.message_handler(content_types=ContentType.TEXT, state=Registration.full_name)
 async def get_full_name(message: Message, state: FSMContext):
-    if re.match(r"[A-Za-z]{3,}\s[A-Za-z]{3,}", message.text) is not None:
+    response = message.text.split()
+    if len(response) == 2 and response[0].isalpha() and response[1].isalpha():
         await state.update_data(full_name=message.text)
         await message.answer(text="2. Sinfingizni tanlang:", reply_markup=(await sync_to_async(grades_markup)()))
         await Registration.grade.set()

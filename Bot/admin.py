@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.db import models
 from django.forms import CheckboxSelectMultiple
 
+from .filters import RegisteredUsers
 from .models import User, Subject, Class, Olympiad
 
 
@@ -13,6 +14,7 @@ class ClassAdmin(admin.ModelAdmin):
 @admin.register(User)
 class UsersAdmin(admin.ModelAdmin):
     list_display = ['name', 'username']
+    list_filter = [RegisteredUsers]
     list_per_page = 50
 
 
