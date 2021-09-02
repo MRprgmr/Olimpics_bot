@@ -15,6 +15,7 @@ class User(models.Model):
     full_name = models.CharField(max_length=40, blank=True, null=True)
     grade = models.ForeignKey(Class, on_delete=models.PROTECT, null=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
+    is_poorly_supplied = models.BooleanField(default=False)
     is_registered = models.BooleanField(default=False)
 
     def __str__(self):
@@ -35,6 +36,7 @@ class Olympiad(models.Model):
     scheduled_date = models.DateField()
     participating_classes = models.ManyToManyField(Class)
     registered_users = models.ManyToManyField(User, related_name='registered_olympiads')
+    status = models.BooleanField(default=True)
 
     def __str__(self):
         return self.title

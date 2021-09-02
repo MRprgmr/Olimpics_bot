@@ -1,4 +1,3 @@
-
 from django.contrib.admin import SimpleListFilter
 
 from Bot.models import Olympiad
@@ -17,4 +16,5 @@ class RegisteredUsers(SimpleListFilter):
     def queryset(self, request, queryset):
         if self.value() is not None:
             olympiad = Olympiad.objects.get(id=self.value())
-            return olympiad.registered_users.order_by('name')
+            custom_list = [user.id for user in olympiad.registered_users.all()]
+            return queryset.filter(id__in=custom_list)

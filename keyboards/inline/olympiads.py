@@ -6,7 +6,7 @@ from keyboards.inline.callback_datas import olympiad_callback, olympiad_register
 
 def get_olympiads():
     olympiads = InlineKeyboardMarkup()
-    data = Olympiad.objects.all()
+    data = Olympiad.objects.filter(status=True)
     if len(data) == 0:
         return None
     for olympiad in data:

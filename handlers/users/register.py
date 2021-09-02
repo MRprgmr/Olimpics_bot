@@ -10,7 +10,8 @@ from keyboards.default.main_menu import main_menu_user
 from keyboards.default.registration import cancel_registration, send_number
 from keyboards.inline.callback_datas import grade_callback
 from keyboards.inline.profile import edit_profile
-from keyboards.inline.registration import profile_buttons, grades_markup, confirmation_buttons
+from keyboards.inline.registration import profile_buttons, grades_markup, confirmation_buttons, \
+    is_poorly_supplied_buttons
 from loader import dp
 from states.register_states import Registration
 
@@ -27,6 +28,7 @@ def make_profile_text(user):
     return answer
 
 
+# Profile button clicked
 @dp.message_handler(Text(equals=['👤 Profil']), state='*')
 async def profile(message: Message, state: FSMContext):
     await state.finish()
@@ -38,7 +40,8 @@ async def profile(message: Message, state: FSMContext):
         await message.answer(text=answer_text, reply_markup=edit_profile)
 
 
-@dp.callback_query_handler(text="register_me")
+# register callback returned
+@dp.callback_query_handler(text="register_me", state='*')
 async def start_registration(call: CallbackQuery):
     await call.message.delete()
     await call.message.answer("1. Familiya ismingizni ketma-ket kiriting, masalan:\n\n<b>👉   Alisherov Valisher</b>",
@@ -46,12 +49,14 @@ async def start_registration(call: CallbackQuery):
     await Registration.full_name.set()
 
 
+# cancel button clicked while registration
 @dp.message_handler(Text(equals=['❌ Bekor qilish']), state=Registration)
 async def cancel(message: Message, state: FSMContext):
     await state.finish()
     await message.answer("Bosh menu", reply_markup=main_menu_user)
 
 
+# full name was sent by user
 @dp.message_handler(content_types=ContentType.TEXT, state=Registration.full_name)
 async def get_full_name(message: Message, state: FSMContext):
     response = message.text.split()
@@ -63,6 +68,7 @@ async def get_full_name(message: Message, state: FSMContext):
         await message.answer("❗️ Familiya ism noto'g'ri formatda kiritildi,\n iltimos qayta kiriting:")
 
 
+# grade selected by user
 @dp.callback_query_handler(grade_callback.filter(), state=Registration.grade)
 async def get_grade(call: CallbackQuery, state: FSMContext, callback_data: dict):
     await state.update_data(grade=callback_data)
@@ -73,6 +79,7 @@ async def get_grade(call: CallbackQuery, state: FSMContext, callback_data: dict)
     await Registration.phone_number.set()
 
 
+# phone number was sent by user
 @dp.message_handler(state=Registration.phone_number, content_types=ContentTypes.TEXT | ContentTypes.CONTACT)
 async def get_number(message: Message, state: FSMContext):
     if message.content_type == 'contact':
@@ -83,24 +90,39 @@ async def get_number(message: Message, state: FSMContext):
         phone_number = '+' + phone_number
 
     if re.match(r"\+998(?:33|93|94|97|90|91|98|99|95|88)\d\d\d\d\d\d\d", phone_number) is not None:
+        msg = await message.answer('🔄', reply_markup=ReplyKeyboardRemove())
+        await msg.delete()
         await state.update_data(phone_number=phone_number)
+        await message.answer(
+            "4. Siz kam ta'minlangan o'quvchilar ro'yxatiga kirasizmi?\n\n ☝️ <i>Iltimos so'rovga to'g'ri javob "
+            "bering❗</i>️", reply_markup=is_poorly_supplied_buttons)
+        await Registration.is_poorly_supplied.set()
+    else:
+        await message.answer("❗️ Telefon nomeri xato kiritildi, iltimos qayta kiriting:")
+
+
+# answer yes or no to know is user poorly supplied
+@dp.callback_query_handler(state=Registration.is_poorly_supplied)
+async def get_yes_or_no(call: CallbackQuery, state: FSMContext):
+    if call.data in ['yes', 'no']:
+        if call.data == 'yes':
+            await state.update_data(is_poorly_supplied=True)
+        else:
+            await state.update_data(is_poorly_supplied=False)
         data = await state.get_data()
         fn = data['full_name'].split()
         answer = "\n".join([
             f"<b>Familiya:</b>   {fn[0]}",
             f"<b>Ism:</b>   {fn[1]}",
             f"<b>Sinfi:</b>   {data['grade']['name']}",
-            f"<b>Telefon:</b>   {phone_number}\n",
+            f"<b>Telefon:</b>   {data['phone_number']}\n",
             "Ma'lumotlarni tasdiqlaysizmi ?",
         ])
-        msg = await message.answer("🔄", reply_markup=ReplyKeyboardRemove())
-        await msg.delete()
-        await message.answer(text=answer, reply_markup=confirmation_buttons)
+        await call.message.edit_text(text=answer, reply_markup=confirmation_buttons)
         await Registration.confirmation.set()
-    else:
-        await message.answer("❗️ Telefon nomeri xato kiritildi, iltimos qayta kiriting:")
 
 
+# completion of registration
 @dp.callback_query_handler(state=Registration.confirmation)
 async def confirm_user_information(call: CallbackQuery, state: FSMContext):
     await call.answer(cache_time=60)
@@ -109,6 +131,7 @@ async def confirm_user_information(call: CallbackQuery, state: FSMContext):
         user = await sync_to_async(User.objects.get)(telegram_id=call.message.chat.id)
         grade = await sync_to_async(Class.objects.get)(id=data['grade']['id'])
         user: User
+        user.is_poorly_supplied = data['is_poorly_supplied']
         user.full_name = data['full_name']
         user.grade = grade
         user.phone_number = data['phone_number']

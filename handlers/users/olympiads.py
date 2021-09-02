@@ -5,6 +5,7 @@ from asgiref.sync import sync_to_async
 from Bot.models import User, Olympiad
 from keyboards.inline.callback_datas import olympiad_callback, olympiad_register_callback
 from keyboards.inline.olympiads import get_olympiads, olympiad_view_short, olympiad_view_long
+from keyboards.inline.registration import profile_buttons
 from loader import dp
 from states.get_information_states import OlympiadsState
 
@@ -12,6 +13,8 @@ from states.get_information_states import OlympiadsState
 def check_and_register(user_id, olympiad_id):
     user = User.objects.get(telegram_id=user_id)
     olympiad = Olympiad.objects.get(id=olympiad_id)
+    if not user.is_registered:
+        return "not_registered"
     if user in olympiad.registered_users.all():
         return "already_registered"
     else:
@@ -23,6 +26,7 @@ def check_and_register(user_id, olympiad_id):
             return "grade_unavailable"
 
 
+# when olympiads button clicked
 @dp.message_handler(Text(equals=["📑 Olimpiadalar"]), state='*')
 async def select_olympiad(message: Message):
     markup = await sync_to_async(get_olympiads)()
@@ -33,6 +37,7 @@ async def select_olympiad(message: Message):
         await OlympiadsState.olympiad.set()
 
 
+# when any olympiad selected
 @dp.callback_query_handler(olympiad_callback.filter(), state=OlympiadsState.olympiad)
 async def get_information(call: CallbackQuery, callback_data: dict):
     answer = await sync_to_async(olympiad_view_short)(callback_data['id'])
@@ -40,6 +45,7 @@ async def get_information(call: CallbackQuery, callback_data: dict):
     await OlympiadsState.view.set()
 
 
+# back button pressed during viewing olympiad details
 @dp.callback_query_handler(text="back", state=OlympiadsState.view)
 async def back(call: CallbackQuery):
     markup = await sync_to_async(get_olympiads)()
@@ -50,6 +56,7 @@ async def back(call: CallbackQuery):
         await OlympiadsState.olympiad.set()
 
 
+# change view mode of olympiad
 @dp.callback_query_handler(Text(startswith='show'), state=OlympiadsState.view)
 async def change_view_mode(call: CallbackQuery):
     olympiad_id = call.data.split('_')[2]
@@ -60,10 +67,13 @@ async def change_view_mode(call: CallbackQuery):
     await call.message.edit_text(text=answer['text'], reply_markup=answer['button'])
 
 
+# when register button pressed in olympiad view
 @dp.callback_query_handler(olympiad_register_callback.filter(), state=OlympiadsState.view)
 async def register(call: CallbackQuery, callback_data: dict):
     result = await sync_to_async(check_and_register)(user_id=call.message.chat.id, olympiad_id=callback_data['id'])
-    if result.startswith('success'):
+    if result == 'not_registered':
+        await call.message.edit_text("⚠️ Sizda hali ma'lumotlar to'ldirilmagan", reply_markup=profile_buttons)
+    elif result.startswith('success'):
         await call.answer(
             f"✅ Siz {result.split('_')[1]} olimpiadasiga ro'yxatdan o'tdingiz.\n"
             f"Olimpiada vaqti {result.split('_')[2]} kuni, iltimos kech qolmang!", show_alert=True)

@@ -14,7 +14,7 @@ class ClassAdmin(admin.ModelAdmin):
 @admin.register(User)
 class UsersAdmin(admin.ModelAdmin):
     list_display = ['name', 'username']
-    list_filter = [RegisteredUsers]
+    list_filter = [RegisteredUsers, 'is_poorly_supplied']
     list_per_page = 50
 
 
@@ -25,7 +25,7 @@ class SubjectsAdmin(admin.ModelAdmin):
 
 @admin.register(Olympiad)
 class OlympiadAdmin(admin.ModelAdmin):
-    fields = ('title', 'subject', 'description', 'participating_classes', 'scheduled_date')
+    fields = ('title', 'subject', 'description', 'participating_classes', 'scheduled_date', 'status')
     list_display = ['title', 'subject']
     list_filter = ['subject']
     formfield_overrides = {

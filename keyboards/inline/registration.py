@@ -42,3 +42,19 @@ confirmation_buttons = InlineKeyboardMarkup(row_width=2,
                                                     )
                                                 ]
                                             ])
+
+is_poorly_supplied_buttons = InlineKeyboardMarkup(row_width=2,
+                                                  inline_keyboard=[
+                                                      [
+                                                          InlineKeyboardButton(
+                                                              text="✅ Ha",
+                                                              callback_data="yes",
+                                                          )
+                                                      ],
+                                                      [
+                                                          InlineKeyboardButton(
+                                                              text="❌ Yo'q",
+                                                              callback_data="no",
+                                                          )
+                                                      ]
+                                                  ])
