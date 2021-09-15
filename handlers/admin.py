@@ -1,3 +1,4 @@
+import logging
 import asyncio
 
 from aiogram.dispatcher.filters.builtin import Command
@@ -15,7 +16,7 @@ from loader import dp
 
 
 # show admin commands --------------------------------------------
-@dp.message_handler(IsAdmin(), Command('commands'))
+@dp.message_handler(IsAdmin(), Command('commands'), state="*")
 async def show_admin_commands(message: Message):
     answer = "\n".join([
         "Admin commands:\n",
@@ -47,7 +48,7 @@ def get_users():
     return result
 
 
-@dp.message_handler(IsAdmin(), Command('broadcast'))
+@dp.message_handler(IsAdmin(), Command('broadcast'), state="*")
 async def send_broadcast(message: Message):
     await message.answer("Send a message to be broadcast:", reply_markup=cancel_button)
     await BroadCastState.start.set()
@@ -59,7 +60,7 @@ async def cancel(message: Message, state: FSMContext):
     await message.answer("Canceled.", reply_markup=ReplyKeyboardRemove())
 
 
-@dp.message_handler(IsAdmin(), content_types=ct.TEXT | ct.AUDIO | ct.PHOTO | ct.VIDEO | ct.VIDEO_NOTE,
+@dp.message_handler(IsAdmin(), content_types=ct.TEXT | ct.AUDIO | ct.PHOTO | ct.VIDEO | ct.VIDEO_NOTE | ct.LOCATION,
                     state=BroadCastState.start)
 async def send_broadcast_start(message: Message, state: FSMContext):
     await message.answer("Broadcast started...")
@@ -70,9 +71,9 @@ async def send_broadcast_start(message: Message, state: FSMContext):
             try:
                 await message.send_copy(user_id)
                 count += 1
-            finally:
-                pass
-        await asyncio.sleep(.05)
+            except Exception as error:
+                logging.info(str(error))
+        await asyncio.sleep(.02)
     finally:
         await message.answer(f"Message sent to {count} users.", reply_markup=ReplyKeyboardRemove())
     await state.finish()
