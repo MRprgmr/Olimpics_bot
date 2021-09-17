@@ -16,8 +16,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from handlers.updater import UpdateBot
+from Bot.views import check_user, get_olympiads
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('bot', UpdateBot.as_view()),
+    path('check_user/', check_user.as_view()),
+    path('get_olympiads', get_olympiads.as_view())
 ]
